@@ -1,5 +1,6 @@
 #include "usart.h"
 #include "commands.h"
+#include "timer.h"
 
 char rx_buffer[BUFFER_SIZE];
 uint8_t rx_index = 0;
@@ -56,12 +57,21 @@ void USART1_IRQHandler(void) {
     if (USART_GetITStatus(USART1, USART_IT_RXNE) != RESET) {
         char received_char = USART_ReceiveData(USART1);
 
+        // 每次收到字符时重置并启动定时器
+        TIM2_Stop();  // 先停止定时器
+        TIM2_Start(); // 重新启动定时器（自动重置计数器）
+
+        // 处理字符
         if (received_char == '\r' || received_char == '\n') {
-            rx_buffer[rx_index] = '\0'; // 字符串结束符
-            ProcessCommand(rx_buffer);  // 处理指令或数据
-            rx_index = 0;               // 重置缓冲区索引
+            // 如果是回车或换行符，立即处理数据（兼容传统方式）
+            if (rx_index > 0) {
+                rx_buffer[rx_index] = '\0';
+                ProcessCommand(rx_buffer);
+                rx_index = 0;
+            }
         } else if (rx_index < BUFFER_SIZE - 1) {
-            rx_buffer[rx_index++] = received_char; // 存储接收到的字符
+            // 存储普通字符
+            rx_buffer[rx_index++] = received_char;
         }
     }
 }

@@ -1,9 +1,11 @@
 #include "stm32f10x.h"
 #include "usart.h"
+#include "timer.h"
 
 int main(void) {
-    // 初始化串口
-    USART1_Init();
+
+    USART1_Init();   // 初始化串口
+    TIM2_Init(10);   //初始化定时器
 
     // 发送欢迎信息
     USART1_SendString("System Started!\r\n");
